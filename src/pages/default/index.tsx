@@ -10,7 +10,7 @@ function Default() {
   const { slug } = useParams<{ slug: string }>();
   const { invitation, family, rsvps, gallery, loading, error, setRsvps } =
     useGetInvitationData(slug);
-
+  console.log(family);
   const embellishmentImage = gallery.filter(
     (item) => item.description === "embellishmentImage"
   );
@@ -26,7 +26,7 @@ function Default() {
       />
       <Map invitation={invitation} />
       <RSVP rsvpImage={embellishmentImage[0]} invitationId={invitation?.id} />
-      <Money />
+      <Money family={family} />
     </main>
   );
 }
