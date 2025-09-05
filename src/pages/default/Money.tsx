@@ -18,7 +18,6 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
     }
   };
 
-  // 토스 앱 실행 함수 (실패 시 복사 fallback)
   const openToss = (link: string, accountNumber: string) => {
     const timeout = setTimeout(() => {
       copyAccount(accountNumber);
@@ -28,6 +27,14 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
     setTimeout(() => clearTimeout(timeout), 2000);
   };
 
+  const openKakao = (link: string, accountNumber: string) => {
+    const timeout = setTimeout(() => {
+      copyAccount(accountNumber);
+    }, 1000);
+
+    window.location.href = "https://link.kakaopay.com/__/pQ1y3H-";
+    setTimeout(() => clearTimeout(timeout), 2000);
+  };
   return (
     <div className="my-10">
       <div className="my-8">
@@ -83,7 +90,7 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
                 {f.hasAccount && (
                   <>
                     <p
-                      className="mb-2"
+                      className="mb-2 cursor-pointer"
                       onClick={() => {
                         if (f.account_number) {
                           copyAccount(f.account_number);
@@ -92,7 +99,7 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
                     >
                       {f.bank_name} {f.account_holder} {f.account_number}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-center items-center">
                       <button
                         className="px-3 py-2 bg-blue-500 text-white rounded"
                         onClick={() => {
@@ -108,8 +115,13 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
                       >
                         토스페이
                       </button>
-                      <button className="px-3 py-2 bg-gray-500 text-white rounded">
-                        계좌번호 복사
+                      <button
+                        onClick={() => {
+                          if (f.account_number) openKakao("", f.account_number);
+                        }}
+                        className="px-3 py-2 bg-gray-500 text-white rounded"
+                      >
+                        카카오페이
                       </button>
                     </div>
                   </>
@@ -122,23 +134,25 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
           <div className="w-1/2 p-4">
             {brideFamily.map((f) => (
               <div key={f.id} className="mb-4">
-                <strong>{f.relation}</strong>
+                <strong className="opacity-70">
+                  {f.relation === "아버지" ? "부" : "모"}
+                </strong>
                 <span className="text-lg font-bold"> {f.displayName}</span>
                 <br />
 
                 {f.hasAccount && (
                   <>
                     <p
-                      className="mb-2"
+                      className="mb-2 cursor-pointer"
                       onClick={() => {
                         if (f.account_number) {
                           copyAccount(f.account_number);
                         }
                       }}
                     >
-                      계좌: {f.bank_name} {f.account_holder} {f.account_number}
+                      {f.bank_name} {f.account_holder} {f.account_number}
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-center items-center">
                       <button
                         className="px-3 py-2 bg-blue-500 text-white rounded"
                         onClick={() => {
@@ -153,6 +167,14 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
                         }}
                       >
                         토스페이
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (f.account_number) openKakao("", f.account_number);
+                        }}
+                        className="px-3 py-2 bg-gray-500 text-white rounded"
+                      >
+                        카카오페이
                       </button>
                     </div>
                   </>
