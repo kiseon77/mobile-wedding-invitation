@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { gsap } from "gsap";
 import type { GalleryItem } from "../../features/useGetInvitationData";
-import Modal from "./modal";
+import Modal from "./Modal";
 
 function RSVP({
   rsvpImage,

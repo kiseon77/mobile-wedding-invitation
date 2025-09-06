@@ -31,7 +31,7 @@ export const Money = ({ family }: { family: FamilyMember[] }) => {
     const timeout = setTimeout(() => {
       copyAccount(accountNumber);
     }, 1000);
-
+    console.log(link);
     window.location.href = "https://link.kakaopay.com/__/pQ1y3H-";
     setTimeout(() => clearTimeout(timeout), 2000);
   };
