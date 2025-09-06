@@ -9,6 +9,7 @@ function App() {
       <Routes>
         <Route path="/invitation/:slug" element={<Default />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<Default />} />
       </Routes>
     </BrowserRouter>
   );
