@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useGetInvitationData } from "../../features/useGetInvitationData";
 import Schedule from "./Schedule";
 import { Invitation } from "./Invitation";
-import Map from "./Map";
+import Location from "./Location";
 import RSVP from "./RSVP";
 import { Money } from "./Money";
 import Gallery from "./Gallery";
@@ -38,7 +38,7 @@ function Default() {
         weddingDate={invitation?.wedding_date}
         weddingTime={invitation?.wedding_time}
       />
-      <Map invitation={invitation} />
+      <Location invitation={invitation} />
       <RSVP rsvpImage={embellishmentImage[0]} invitationId={invitation?.id} />
       <Money family={family} />
       <Gallery gallery={gallery} />

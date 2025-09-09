@@ -1,6 +1,10 @@
+import { Map, MapMarker, useKakaoLoader } from "react-kakao-maps-sdk";
 import type { Invitation } from "../../features/useGetInvitationData";
 
-function Map({ invitation }: { invitation: Invitation }) {
+function Location({ invitation }: { invitation: Invitation }) {
+  useKakaoLoader();
+  console.log(invitation);
+
   return (
     <section>
       <div className="my-11">
@@ -10,7 +14,16 @@ function Map({ invitation }: { invitation: Invitation }) {
           Tal. {invitation.wedding_hall?.phone}
         </p>
       </div>
-      <div className="aspect-square bg-neutral-300">지도</div>
+      <div className="aspect-square bg-neutral-300">
+        <Map
+          center={{ lat: 33.5563, lng: 126.79581 }}
+          style={{ width: "100%" }}
+        >
+          <MapMarker position={{ lat: 33.55635, lng: 126.795841 }}>
+            <div style={{ color: "#000" }}>Hello World!</div>
+          </MapMarker>
+        </Map>
+      </div>
       <div className="text-left my-6 mx-4 md:mx-8">
         <div>
           <p>내비게이션</p>
@@ -42,4 +55,4 @@ function Map({ invitation }: { invitation: Invitation }) {
   );
 }
 
-export default Map;
+export default Location;
