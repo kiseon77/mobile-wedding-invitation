@@ -1,137 +1,112 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-
-// 카카오맵 타입 정의
-declare global {
-  interface Window {
-    kakao: {
-      maps: {
-        load: (callback: () => void) => void;
-        Map: new (container: HTMLElement, options: MapOptions) => KakaoMap;
-        Marker: new (options: MarkerOptions) => KakaoMarker;
-        InfoWindow: new (options: InfoWindowOptions) => KakaoInfoWindow;
-        LatLng: new (lat: number, lng: number) => KakaoLatLng;
-        services: {
-          Geocoder: new () => KakaoGeocoder;
-        };
-        event: {
-          addListener: (target: any, type: string, handler: () => void) => void;
-        };
-      };
-    };
-  }
-}
+import { useEffect, useRef, useCallback } from "react";
 
 interface MapOptions {
-  center: KakaoLatLng;
-  level: number;
+  lat: number;
+  lng: number;
+  level?: number;
 }
 
 interface MarkerOptions {
-  position: KakaoLatLng;
-  map?: KakaoMap;
+  lat: number;
+  lng: number;
+  title?: string;
+  clickable?: boolean;
 }
 
-interface InfoWindowOptions {
-  content: string;
-  position?: KakaoLatLng;
-}
-
-interface KakaoMap {
-  setCenter: (latlng: KakaoLatLng) => void;
-  getLevel: () => number;
+interface AdvancedKakaoMapHook {
+  mapRef: React.RefObject<HTMLDivElement>;
+  map: kakao.maps.Map | null;
+  addMarker: (options: MarkerOptions) => kakao.maps.Marker | null;
+  removeAllMarkers: () => void;
+  setCenter: (lat: number, lng: number) => void;
   setLevel: (level: number) => void;
 }
 
-interface KakaoMarker {
-  setMap: (map: KakaoMap | null) => void;
-  getPosition: () => KakaoLatLng;
-}
-
-interface KakaoInfoWindow {
-  open: (map: KakaoMap, marker: KakaoMarker) => void;
-  close: () => void;
-}
-
-interface KakaoLatLng {
-  getLat: () => number;
-  getLng: () => number;
-}
-
-interface KakaoGeocoder {
-  addressSearch: (
-    address: string,
-    callback: (result: GeocodeResult[], status: string) => void
-  ) => void;
-}
-
-interface GeocodeResult {
-  x: string; // 경도
-  y: string; // 위도
-  address_name: string;
-}
-
-interface Coordinates {
-  lat: number;
-  lng: number;
-}
-
-interface UseKakaoMapProps {
-  name: string;
-  address: string;
-  appKey?: string; // 선택적으로 앱 키를 받을 수 있도록
-}
-
-interface UseKakaoMapReturn {
-  mapRef: React.RefObject<HTMLDivElement>;
-  isLoading: boolean;
-  error: string | null;
-  coordinates: Coordinates | null;
-  openInKakaoMap: () => void;
-  openInNaverMap: () => void;
-  openInGoogleMap: () => void;
-  retry: () => void;
-}
-
-const kakaoApiKey = import.meta.env.VITE_KAKAO_API_JAVASCRIPT_KEY;
-export const useKakaoMap = ({
-  name,
-  address,
-}: UseKakaoMapProps): UseKakaoMapReturn => {
+export function useKakaoMap({
+  lat,
+  lng,
+  level = 3,
+}: MapOptions): AdvancedKakaoMapHook {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
+  const markersRef = useRef<kakao.maps.Marker[]>([]);
 
-  // 네이버맵에서 열기
-  const openInNaverMap = useCallback(() => {
-    if (!address) {
-      alert("주소 정보가 없습니다.");
+  useEffect(() => {
+    if (!mapRef.current || !lat || !lng) return;
+
+    const { kakao } = window as any;
+    if (!kakao?.maps) {
+      console.error("Kakao Maps API is not loaded");
       return;
     }
 
-    const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(
-      address
-    )}`;
-    window.open(naverMapUrl, "_blank", "noopener,noreferrer");
-  }, [address]);
+    const container = mapRef.current;
+    const options = {
+      center: new kakao.maps.LatLng(lat, lng),
+      level,
+    };
 
-  // 구글맵에서 열기
-  const openInGoogleMap = useCallback(() => {
-    if (!address) {
-      alert("주소 정보가 없습니다.");
-      return;
-    }
+    // 지도 생성
+    const map = new kakao.maps.Map(container, options);
+    mapInstanceRef.current = map;
 
-    const googleMapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
-      address
-    )}`;
-    window.open(googleMapUrl, "_blank", "noopener,noreferrer");
-  }, [address]);
+    // 기본 마커 생성
+    const markerPosition = new kakao.maps.LatLng(lat, lng);
+    const marker = new kakao.maps.Marker({
+      position: markerPosition,
+    });
+
+    marker.setMap(map);
+    markersRef.current.push(marker);
+
+    // 클린업 함수
+    return () => {
+      markersRef.current = [];
+      mapInstanceRef.current = null;
+    };
+  }, [lat, lng, level]);
+
+  const addMarker = useCallback((options: MarkerOptions) => {
+    if (!mapInstanceRef.current) return null;
+
+    const { kakao } = window as any;
+    const markerPosition = new kakao.maps.LatLng(options.lat, options.lng);
+    const marker = new kakao.maps.Marker({
+      position: markerPosition,
+      title: options.title,
+      clickable: options.clickable || false,
+    });
+
+    marker.setMap(mapInstanceRef.current);
+    markersRef.current.push(marker);
+
+    return marker;
+  }, []);
+
+  const removeAllMarkers = useCallback(() => {
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current = [];
+  }, []);
+
+  const setCenter = useCallback((lat: number, lng: number) => {
+    if (!mapInstanceRef.current) return;
+
+    const { kakao } = window as any;
+    const moveLatLon = new kakao.maps.LatLng(lat, lng);
+    mapInstanceRef.current.setCenter(moveLatLon);
+  }, []);
+
+  const setLevel = useCallback((level: number) => {
+    if (!mapInstanceRef.current) return;
+    mapInstanceRef.current.setLevel(level);
+  }, []);
 
   return {
     mapRef,
-    isLoading,
-    error,
-    coordinates,
-    openInKakaoMap,
-    openInNaverMap,
-    openInGoogleMap,
+    map: mapInstanceRef.current,
+    addMarker,
+    removeAllMarkers,
+    setCenter,
+    setLevel,
   };
-};
+}

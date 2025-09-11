@@ -1,9 +1,118 @@
-import { Map, MapMarker, useKakaoLoader } from "react-kakao-maps-sdk";
 import type { Invitation } from "../../features/useGetInvitationData";
+import { useKakaoMap } from "../../features/useKakaoMap";
 
 function Location({ invitation }: { invitation: Invitation }) {
-  useKakaoLoader();
   console.log(invitation);
+  const { mapRef } = useKakaoMap({
+    lat: invitation.wedding_hall?.lat || 0,
+    lng: invitation.wedding_hall?.lng || 0,
+    level: 3,
+  });
+
+  // 내비게이션 앱 연동 함수들
+  const openNaverMap = () => {
+    const lat = invitation.wedding_hall?.lat;
+    const lng = invitation.wedding_hall?.lng;
+    const name = invitation.wedding_hall?.name || "";
+
+    if (!lat || !lng) {
+      alert("위치 정보가 없습니다.");
+      return;
+    }
+
+    // 네이버지도 앱 URL 스킴 (모바일)
+    const naverAppUrl = `nmap://place?lat=${lat}&lng=${lng}&name=${encodeURIComponent(
+      name
+    )}&appname=wedding-invitation`;
+
+    // 네이버지도 웹 URL (PC 또는 앱이 없는 경우)
+    const naverWebUrl = `https://map.naver.com/v5/search/${encodeURIComponent(
+      name
+    )}?c=${lng},${lat},15,0,0,0,dh`;
+
+    // 모바일에서 앱 실행 시도, 실패하면 웹으로 이동
+    if (
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
+    ) {
+      window.location.href = naverAppUrl;
+      // 앱이 설치되지 않은 경우를 대비해 웹 URL로 fallback
+      setTimeout(() => {
+        window.open(naverWebUrl, "_blank");
+      }, 1000);
+    } else {
+      window.open(naverWebUrl, "_blank");
+    }
+  };
+
+  const openTmap = () => {
+    const lat = invitation.wedding_hall?.lat;
+    const lng = invitation.wedding_hall?.lng;
+    const name = invitation.wedding_hall?.name || "목적지";
+
+    if (!lat || !lng) {
+      alert("위치 정보가 없습니다.");
+      return;
+    }
+
+    // 티맵 앱 URL 스킴 (좌표 기반)
+    const tmapAppUrl = `tmap://route?goalx=${lng}&goaly=${lat}&goalname=${encodeURIComponent(
+      name
+    )}`;
+
+    // 티맵 웹 URL (좌표 기반)
+    const tmapWebUrl = `https://tmap.life/route/search?goalX=${lng}&goalY=${lat}&goalName=${encodeURIComponent(
+      name
+    )}`;
+
+    if (
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
+    ) {
+      window.location.href = tmapAppUrl;
+      setTimeout(() => {
+        window.open(tmapWebUrl, "_blank");
+      }, 1000);
+    } else {
+      window.open(tmapWebUrl, "_blank");
+    }
+  };
+
+  const openKakaoNavi = () => {
+    const lat = invitation.wedding_hall?.lat;
+    const lng = invitation.wedding_hall?.lng;
+    const name = invitation.wedding_hall?.name || "";
+
+    if (!lat || !lng) {
+      alert("위치 정보가 없습니다.");
+      return;
+    }
+
+    // 카카오내비 앱 URL 스킴
+    const kakaoNaviUrl = `kakaonavi-sdk://navigate?destination=${lat},${lng}&destination_name=${encodeURIComponent(
+      name
+    )}`;
+
+    // 카카오맵 웹 URL (카카오내비 앱이 없는 경우)
+    const kakaoMapUrl = `https://map.kakao.com/link/to/${encodeURIComponent(
+      name
+    )},${lat},${lng}`;
+
+    if (
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      )
+    ) {
+      window.location.href = kakaoNaviUrl;
+      setTimeout(() => {
+        window.open(kakaoMapUrl, "_blank");
+      }, 1000);
+    } else {
+      window.open(kakaoMapUrl, "_blank");
+    }
+  };
 
   return (
     <section>
@@ -14,16 +123,7 @@ function Location({ invitation }: { invitation: Invitation }) {
           Tal. {invitation.wedding_hall?.phone}
         </p>
       </div>
-      <div className="aspect-square bg-neutral-300">
-        <Map
-          center={{ lat: 33.5563, lng: 126.79581 }}
-          style={{ width: "100%" }}
-        >
-          <MapMarker position={{ lat: 33.55635, lng: 126.795841 }}>
-            <div style={{ color: "#000" }}>Hello World!</div>
-          </MapMarker>
-        </Map>
-      </div>
+      <div ref={mapRef} className="aspect-square bg-neutral-300"></div>
       <div className="text-left my-6 mx-4 md:mx-8">
         <div>
           <p>내비게이션</p>
@@ -32,13 +132,21 @@ function Location({ invitation }: { invitation: Invitation }) {
           </p>
 
           <div className="flex gap-2 justify-between my-4">
-            <button type="button" className=" default-btn">
+            <button
+              type="button"
+              className="default-btn"
+              onClick={openNaverMap}
+            >
               네이버지도
             </button>
-            <button type="button" className=" default-btn">
+            <button type="button" className="default-btn" onClick={openTmap}>
               티맵
             </button>
-            <button type="button" className=" default-btn">
+            <button
+              type="button"
+              className="default-btn"
+              onClick={openKakaoNavi}
+            >
               카카오내비
             </button>
           </div>
