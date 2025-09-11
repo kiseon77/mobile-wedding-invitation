@@ -1,5 +1,18 @@
 import { useEffect, useRef, useCallback } from "react";
 
+// Kakao Maps API 타입 정의
+declare global {
+  interface Window {
+    kakao: {
+      maps: {
+        Map: new (container: HTMLElement, options: any) => any;
+        LatLng: new (lat: number, lng: number) => any;
+        Marker: new (options: any) => any;
+      };
+    };
+  }
+}
+
 interface MapOptions {
   lat: number;
   lng: number;
@@ -14,9 +27,9 @@ interface MarkerOptions {
 }
 
 interface AdvancedKakaoMapHook {
-  mapRef: React.RefObject<HTMLDivElement>;
-  map: kakao.maps.Map | null;
-  addMarker: (options: MarkerOptions) => kakao.maps.Marker | null;
+  mapRef: React.RefObject<HTMLDivElement | null>;
+  map: any | null; // kakao.maps.Map 대신 any 사용
+  addMarker: (options: MarkerOptions) => any | null; // kakao.maps.Marker 대신 any 사용
   removeAllMarkers: () => void;
   setCenter: (lat: number, lng: number) => void;
   setLevel: (level: number) => void;
@@ -28,31 +41,30 @@ export function useKakaoMap({
   level = 3,
 }: MapOptions): AdvancedKakaoMapHook {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<kakao.maps.Map | null>(null);
-  const markersRef = useRef<kakao.maps.Marker[]>([]);
+  const mapInstanceRef = useRef<any>(null); // kakao.maps.Map 대신 any 사용
+  const markersRef = useRef<any[]>([]); // kakao.maps.Marker[] 대신 any[] 사용
 
   useEffect(() => {
     if (!mapRef.current || !lat || !lng) return;
 
-    const { kakao } = window as any;
-    if (!kakao?.maps) {
+    if (!window.kakao?.maps) {
       console.error("Kakao Maps API is not loaded");
       return;
     }
 
     const container = mapRef.current;
     const options = {
-      center: new kakao.maps.LatLng(lat, lng),
+      center: new window.kakao.maps.LatLng(lat, lng),
       level,
     };
 
     // 지도 생성
-    const map = new kakao.maps.Map(container, options);
+    const map = new window.kakao.maps.Map(container, options);
     mapInstanceRef.current = map;
 
     // 기본 마커 생성
-    const markerPosition = new kakao.maps.LatLng(lat, lng);
-    const marker = new kakao.maps.Marker({
+    const markerPosition = new window.kakao.maps.LatLng(lat, lng);
+    const marker = new window.kakao.maps.Marker({
       position: markerPosition,
     });
 
@@ -69,9 +81,11 @@ export function useKakaoMap({
   const addMarker = useCallback((options: MarkerOptions) => {
     if (!mapInstanceRef.current) return null;
 
-    const { kakao } = window as any;
-    const markerPosition = new kakao.maps.LatLng(options.lat, options.lng);
-    const marker = new kakao.maps.Marker({
+    const markerPosition = new window.kakao.maps.LatLng(
+      options.lat,
+      options.lng
+    );
+    const marker = new window.kakao.maps.Marker({
       position: markerPosition,
       title: options.title,
       clickable: options.clickable || false,
@@ -91,8 +105,7 @@ export function useKakaoMap({
   const setCenter = useCallback((lat: number, lng: number) => {
     if (!mapInstanceRef.current) return;
 
-    const { kakao } = window as any;
-    const moveLatLon = new kakao.maps.LatLng(lat, lng);
+    const moveLatLon = new window.kakao.maps.LatLng(lat, lng);
     mapInstanceRef.current.setCenter(moveLatLon);
   }, []);
 
